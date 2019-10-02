@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Termbox",
+        "repositoryURL": "https://github.com/colinta/Termbox.git",
+        "state": {
+          "branch": "c0b4baf",
+          "revision": "c0b4baf778f1213d29558b6c7028312bf99b6e6b",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
