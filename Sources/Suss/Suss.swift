@@ -45,8 +45,8 @@ struct Suss: Program {
             case responseHeaders
             case responseBody
 
-            var next: Input { return Input(rawValue: rawValue + 1) ?? .first }
-            var prev: Input { return Input(rawValue: rawValue - 1) ?? .last }
+            var next: Input { Input(rawValue: rawValue + 1) ?? .first }
+            var prev: Input { Input(rawValue: rawValue - 1) ?? .last }
         }
 
         var active: Input = .url
@@ -57,7 +57,7 @@ struct Suss: Program {
         var headers: String = ""
 
         var httpCommand: Http?
-        var requestSent: Bool { return httpCommand != nil }
+        var requestSent: Bool { httpCommand != nil }
 
         var response: (content: TextType, headers: Http.Headers)?
         var responseComponentSize: Size?
@@ -127,7 +127,7 @@ struct Suss: Program {
     )
 
     func initial() -> (Model, [Command]) {
-        return (Model(), [])
+        (Model(), [])
     }
 
     func update(model: inout Model, message: Message)
@@ -291,10 +291,10 @@ struct Suss: Program {
             text: model.url,
             isFirstResponder: activeInput == .url,
             onChange: { model in
-                return Message.onChange(.url, model)
+                Message.onChange(.url, model)
             },
             onEnter: {
-                return Message.submit
+                Message.submit
             }
         )
 
@@ -308,7 +308,7 @@ struct Suss: Program {
         }
 
         let httpMethodText: [TextType] = httpMethods.map { httpMethod -> Text in
-            return Text(httpMethod, httpMethod == model.httpMethod.rawValue ? activeAttrs : [])
+            Text(httpMethod, httpMethod == model.httpMethod.rawValue ? activeAttrs : [])
         }.reduce([TextType]()) { (memo, httpMethodText) -> [TextType] in
             if memo.count > 0 {
                 return memo + [" ", httpMethodText]
@@ -321,9 +321,9 @@ struct Suss: Program {
         if activeInput == .httpMethod {
             httpMethodInputs = [
                 LabelView(text: AttrText(httpMethodText)),
-                OnKeyPress(.left, { return Message.prevMethod }),
-                OnKeyPress(.right, { return Message.nextMethod }),
-                OnKeyPress(.enter, { return Message.submit }),
+                OnKeyPress(.left, { Message.prevMethod }),
+                OnKeyPress(.right, { Message.nextMethod }),
+                OnKeyPress(.enter, { Message.submit }),
             ]
         }
         else {
@@ -347,7 +347,7 @@ struct Suss: Program {
             isFirstResponder: activeInput == .body,
             isMultiline: true,
             onChange: { model in
-                return Message.onChange(.body, model)
+                Message.onChange(.body, model)
             }
         )
 
@@ -357,7 +357,7 @@ struct Suss: Program {
             isFirstResponder: activeInput == .urlParameters,
             isMultiline: true,
             onChange: { model in
-                return Message.onChange(.urlParameters, model)
+                Message.onChange(.urlParameters, model)
             }
         )
 
@@ -367,7 +367,7 @@ struct Suss: Program {
             isFirstResponder: activeInput == .headers,
             isMultiline: true,
             onChange: { model in
-                return Message.onChange(.headers, model)
+                Message.onChange(.headers, model)
             }
         )
 
@@ -383,7 +383,7 @@ struct Suss: Program {
         let topLevelComponents: [Component]
         if let error = model.error {
             topLevelComponents = [
-                OnKeyPress({ _ in return Message.clearError }),
+                OnKeyPress({ _ in Message.clearError }),
                 Box(
                     at: .middleCenter(),
                     size: DesiredSize(width: error.count + 4, height: 5),
@@ -403,9 +403,9 @@ struct Suss: Program {
         }
         else {
             topLevelComponents = [
-                OnKeyPress(.esc, { return Message.quit }),
-                OnKeyPress(.tab, { return Message.nextInput }),
-                OnKeyPress(.backtab, { return Message.prevInput }),
+                OnKeyPress(.esc, { Message.quit }),
+                OnKeyPress(.tab, { Message.nextInput }),
+                OnKeyPress(.backtab, { Message.prevInput }),
             ]
         }
 
@@ -425,28 +425,29 @@ struct Suss: Program {
 
         if activeInput == .responseHeaders {
             responseHeaders += [
-                OnKeyPress(.up, { return Message.scrollResponseHeaders(-1, 0) }),
-                OnKeyPress(.left, { return Message.scrollResponseHeaders(0, -1) }),
-                OnKeyPress(.down, { return Message.scrollResponseHeaders(+1, 0) }),
-                OnKeyPress(.right, { return Message.scrollResponseHeaders(0, +1) }),
+                OnKeyPress(.up, { Message.scrollResponseHeaders(-1, 0) }),
+                OnKeyPress(.left, { Message.scrollResponseHeaders(0, -1) }),
+                OnKeyPress(.down, { Message.scrollResponseHeaders(+1, 0) }),
+                OnKeyPress(.right, { Message.scrollResponseHeaders(0, +1) }),
             ]
         }
 
         if activeInput == .responseBody {
             responseContent += [
-                OnKeyPress(.up, { return Message.scrollResponseContent(-1, 0) }),
-                OnKeyPress(.left, { return Message.scrollResponseContent(0, -1) }),
-                OnKeyPress(.down, { return Message.scrollResponseContent(+1, 0) }),
-                OnKeyPress(.right, { return Message.scrollResponseContent(0, +1) }),
+                OnKeyPress(.up, { Message.scrollResponseContent(-1, 0) }),
+                OnKeyPress(.left, { Message.scrollResponseContent(0, -1) }),
+                OnKeyPress(.down, { Message.scrollResponseContent(+1, 0) }),
+                OnKeyPress(.right, { Message.scrollResponseContent(0, +1) }),
+                OnKeyPress(.ctrl(.a), { Message.scrollTopResponseContent }),
             ]
 
             if let size = model.responseComponentSize {
                 responseContent += [
-                    OnKeyPress(.pageUp, { return Message.scrollResponseContent(-(size.height - 1), 0) }),
-                    OnKeyPress(.pageDown, { return Message.scrollResponseContent(size.height - 1, 0) }),
-                    OnKeyPress(.alt(.left), { return Message.scrollResponseContent(0, -(size.width - 1)) }),
-                    OnKeyPress(.alt(.right), { return Message.scrollResponseContent(0, size.width - 1) }),
-                    OnKeyPress(.space, { return Message.scrollResponseContent(size.height - 1, 0) }),
+                    OnKeyPress(.pageUp, { Message.scrollResponseContent(-(size.height - 1), 0) }),
+                    OnKeyPress(.pageDown, { Message.scrollResponseContent(size.height - 1, 0) }),
+                    OnKeyPress(.alt(.left), { Message.scrollResponseContent(0, -(size.width - 1)) }),
+                    OnKeyPress(.alt(.right), { Message.scrollResponseContent(0, size.width - 1) }),
+                    OnKeyPress(.space, { Message.scrollResponseContent(size.height - 1, 0) }),
                 ]
             }
         }

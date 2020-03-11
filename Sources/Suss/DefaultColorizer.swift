@@ -7,6 +7,6 @@ import Ashen
 
 class DefaultColorizer: Colorizer {
     func process(_ input: String) -> TextType {
-        return input
+        input
     }
 }
