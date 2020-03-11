@@ -98,15 +98,29 @@ struct Suss: Program {
     }
 
     let fullBorder = Box.Border(
-        tlCorner: "┌", trCorner: "┐", blCorner: "│", brCorner: "│",
-        tbSide: "─", topSide: "─", bottomSide: "",
-        lrSide: "│", leftSide: "│", rightSide: "│"
-        )
+        tlCorner: "┌",
+        trCorner: "┐",
+        blCorner: "│",
+        brCorner: "│",
+        tbSide: "─",
+        topSide: "─",
+        bottomSide: "",
+        lrSide: "│",
+        leftSide: "│",
+        rightSide: "│"
+    )
     let sideBorder = Box.Border(
-        tlCorner: "┌", trCorner: "─", blCorner: "│", brCorner: "",
-        tbSide: "─", topSide: "─", bottomSide: "",
-        lrSide: "│", leftSide: "│", rightSide: ""
-        )
+        tlCorner: "┌",
+        trCorner: "─",
+        blCorner: "│",
+        brCorner: "",
+        tbSide: "─",
+        topSide: "─",
+        bottomSide: "",
+        lrSide: "│",
+        leftSide: "│",
+        rightSide: ""
+    )
 
     func initial() -> (Model, [Command]) {
         return (Model(), [])
@@ -120,7 +134,7 @@ struct Suss: Program {
             return (model, [], .quit)
         case .submit:
             do {
-               return try submit(model: &model, message: message)
+                return try submit(model: &model, message: message)
             }
             catch {
                 model.error = (error as? Error)?.description
@@ -161,7 +175,7 @@ struct Suss: Program {
                 model.headersOffset = Point(
                     x: min(maxOffset, max(0, model.headersOffset.x + dx)),
                     y: min(maxOffset, max(0, model.headersOffset.y + dy))
-                    )
+                )
             }
         case let .scrollResponseContent(dy, dx):
             if let response = model.response {
@@ -169,7 +183,7 @@ struct Suss: Program {
                 model.contentOffset = Point(
                     x: min(maxOffset, max(0, model.contentOffset.x + dx)),
                     y: min(maxOffset, max(0, model.contentOffset.y + dy))
-                    )
+                )
             }
         }
 
@@ -198,7 +212,8 @@ struct Suss: Program {
             }.joined(separator: "&")
         }
 
-        let headers: Http.Headers = split(model.headers, separator: "\n").compactMap({ entries -> Http.Header? in
+        let headers: Http.Headers = split(model.headers, separator: "\n").compactMap({
+            entries -> Http.Header? in
             let kvp = split(entries, separator: ":", limit: 2, trim: true)
             guard kvp.count == 2 else { return nil }
             return (kvp[0], kvp[1])
@@ -221,7 +236,9 @@ struct Suss: Program {
 
         let cmd = Http(url: url, options: options) { result in
             do {
-                let (response, headers) = try result.map { data, headers -> (String, Http.Headers) in
+                let (response, headers) = try result.map {
+                    data,
+                    headers -> (String, Http.Headers) in
                     if let str = String(data: data, encoding: .utf8) {
                         return (str, headers)
                     }
@@ -256,7 +273,8 @@ struct Suss: Program {
             },
             onEnter: {
                 return Message.submit
-            })
+            }
+        )
 
         let httpMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
         let activeAttrs: [Attr]
@@ -308,7 +326,8 @@ struct Suss: Program {
             isMultiline: true,
             onChange: { model in
                 return Message.onChange(.body, model)
-            })
+            }
+        )
 
         let requestParametersLabel = Text("GET Parameters", highlight(if: .urlParameters))
         let urlParametersInput = InputView(
@@ -317,7 +336,8 @@ struct Suss: Program {
             isMultiline: true,
             onChange: { model in
                 return Message.onChange(.urlParameters, model)
-            })
+            }
+        )
 
         let requestHeadersLabel = Text("Headers", highlight(if: .headers))
         let headersInput = InputView(
@@ -326,7 +346,8 @@ struct Suss: Program {
             isMultiline: true,
             onChange: { model in
                 return Message.onChange(.headers, model)
-            })
+            }
+        )
 
         let responseHeadersLabel = Text("Response headers", highlight(if: .responseHeaders))
         let responseBodyLabel = Text("Response body", highlight(if: .responseBody))
@@ -341,10 +362,16 @@ struct Suss: Program {
         if let error = model.error {
             topLevelComponents = [
                 OnKeyPress({ _ in return Message.clearError }),
-                Box(at: .middleCenter(), size: DesiredSize(width: error.count + 4, height: 5), border: .single, label: "Error", components: [
-                    LabelView(at: .topCenter(), text: Text(error, [.foreground(.red)])),
-                    LabelView(at: .bottomCenter(), text: Text("< OK >", [.reverse])),
-                ]),
+                Box(
+                    at: .middleCenter(),
+                    size: DesiredSize(width: error.count + 4, height: 5),
+                    border: .single,
+                    label: "Error",
+                    components: [
+                        LabelView(at: .topCenter(), text: Text(error, [.foreground(.red)])),
+                        LabelView(at: .bottomCenter(), text: Text("< OK >", [.reverse])),
+                    ]
+                ),
             ]
         }
         else if model.requestSent {
@@ -390,24 +417,82 @@ struct Suss: Program {
             ]
         }
 
-        return Window(components: [
-            Box(at: .topLeft(x: 0, y: 0), size: DesiredSize(width: screenSize.width, height: 2), border: fullBorder, label: urlLabel, components: [urlInput]),
-            Box(at: .topLeft(x: 0, y: 3), size: DesiredSize(width: maxSideWidth, height: 2), border: sideBorder, label: methodLabel, components: httpMethodInputs),
-            GridLayout(at: .topLeft(x: 0, y: 6), size: Size(width: requestWidth, height: remainingHeight), rows: [
-                .row([Box(border: sideBorder, label: requestParametersLabel, components: [urlParametersInput])]),
-                .row([Box(border: sideBorder, label: requestBodyLabel, components: [bodyInput])]),
-                .row([Box(border: sideBorder, label: requestHeadersLabel, components: [headersInput])]),
-            ]),
-            GridLayout(at: .topLeft(x: requestWidth, y: 3), size: Size(width: responseWidth, height: responseHeight), rows: [
-                .row(weight: .fixed(10), [
-                    Box(border: sideBorder, label: responseHeadersLabel, components: responseHeaders, scrollOffset: model.headersOffset)
-                ]),
-                .row([
-                    Box(border: sideBorder, label: responseBodyLabel, components: responseContent, scrollOffset: model.contentOffset)
-                ]),
-            ]),
-            Box(at: .bottomRight(x: 0, y: -1), size: DesiredSize(width: screenSize.width, height: 1), background: Text(" ", [.reverse]), components: [LabelView(text: Text(model.status, [.reverse]))]),
-        ] + topLevelComponents)
+        return Window(
+            components: [
+                Box(
+                    at: .topLeft(x: 0, y: 0),
+                    size: DesiredSize(width: screenSize.width, height: 2),
+                    border: fullBorder,
+                    label: urlLabel,
+                    components: [urlInput]
+                ),
+                Box(
+                    at: .topLeft(x: 0, y: 3),
+                    size: DesiredSize(width: maxSideWidth, height: 2),
+                    border: sideBorder,
+                    label: methodLabel,
+                    components: httpMethodInputs
+                ),
+                GridLayout(
+                    at: .topLeft(x: 0, y: 6),
+                    size: Size(width: requestWidth, height: remainingHeight),
+                    rows: [
+                        .row([
+                            Box(
+                                border: sideBorder,
+                                label: requestParametersLabel,
+                                components: [urlParametersInput]
+                            )
+                        ]),
+                        .row([
+                            Box(
+                                border: sideBorder,
+                                label: requestBodyLabel,
+                                components: [bodyInput]
+                            )
+                        ]),
+                        .row([
+                            Box(
+                                border: sideBorder,
+                                label: requestHeadersLabel,
+                                components: [headersInput]
+                            )
+                        ]),
+                    ]
+                ),
+                GridLayout(
+                    at: .topLeft(x: requestWidth, y: 3),
+                    size: Size(width: responseWidth, height: responseHeight),
+                    rows: [
+                        .row(
+                            weight: .fixed(10),
+                            [
+                                Box(
+                                    border: sideBorder,
+                                    label: responseHeadersLabel,
+                                    components: responseHeaders,
+                                    scrollOffset: model.headersOffset
+                                )
+                            ]
+                        ),
+                        .row([
+                            Box(
+                                border: sideBorder,
+                                label: responseBodyLabel,
+                                components: responseContent,
+                                scrollOffset: model.contentOffset
+                            )
+                        ]),
+                    ]
+                ),
+                Box(
+                    at: .bottomRight(x: 0, y: -1),
+                    size: DesiredSize(width: screenSize.width, height: 1),
+                    background: Text(" ", [.reverse]),
+                    components: [LabelView(text: Text(model.status, [.reverse]))]
+                ),
+            ] + topLevelComponents
+        )
     }
 }
 
@@ -422,7 +507,9 @@ extension Suss.Error {
     }
 }
 
-private func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = false) -> [String] {
+private func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = false)
+    -> [String]
+{
     guard limit != 0 else { return [] }
 
     var count = 1
@@ -437,5 +524,6 @@ private func split(_ string: String, separator: Character, limit: Int? = nil, tr
         if trim {
             return retval.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        return retval })
+        return retval
+    })
 }

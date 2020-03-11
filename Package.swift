@@ -16,4 +16,4 @@ let package = Package(
     targets: [
         .target(name: "Suss", dependencies: ["Ashen"]),
     ]
-    )
+)
