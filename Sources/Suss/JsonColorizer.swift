@@ -20,7 +20,7 @@ class JsonColorizer: Colorizer {
         case colon
 
         case quote
-        case char(String)     // any character between quotes
+        case char(String)  // any character between quotes
         case unicode(String)  // \u0000
         case escaped(String)  // \\, \/, etc
         case number(String)

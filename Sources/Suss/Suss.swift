@@ -190,7 +190,9 @@ struct Suss: Program {
                 else {
                     height = 1
                 }
-                let maxOffset = response.content.chars.reduce(-height) { count, s in s.char == "\n" ? count + 1 : count }
+                let maxOffset = response.content.chars.reduce(-height) { count, s in
+                    s.char == "\n" ? count + 1 : count
+                }
                 model.contentOffset = Point(
                     x: min(maxOffset, max(0, model.contentOffset.x + dx)),
                     y: min(maxOffset, max(0, model.contentOffset.y + dy))
@@ -445,7 +447,10 @@ struct Suss: Program {
                 responseContent += [
                     OnKeyPress(.pageUp, { Message.scrollResponseContent(-(size.height - 1), 0) }),
                     OnKeyPress(.pageDown, { Message.scrollResponseContent(size.height - 1, 0) }),
-                    OnKeyPress(.alt(.left), { Message.scrollResponseContent(0, -(size.width - 1)) }),
+                    OnKeyPress(
+                        .alt(.left),
+                        { Message.scrollResponseContent(0, -(size.width - 1)) }
+                    ),
                     OnKeyPress(.alt(.right), { Message.scrollResponseContent(0, size.width - 1) }),
                     OnKeyPress(.space, { Message.scrollResponseContent(size.height - 1, 0) }),
                 ]
