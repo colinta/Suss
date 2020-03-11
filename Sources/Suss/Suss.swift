@@ -23,7 +23,7 @@ struct Suss: Program {
         case nextMethod
         case prevMethod
         case clearError
-        case received(String, Http.Headers)
+        case received(TextType, Http.Headers)
         case receivedError(String)
         case onChange(Model.Input, String)
         case scrollResponseHeaders(Int, Int)
@@ -57,7 +57,7 @@ struct Suss: Program {
         var httpCommand: Http?
         var requestSent: Bool { return httpCommand != nil }
 
-        var response: (content: String, headers: Http.Headers)?
+        var response: (content: TextType, headers: Http.Headers)?
         var headersOffset = Point(x: 0, y: 0)
         var contentOffset = Point(x: 0, y: 0)
 
@@ -180,7 +180,7 @@ struct Suss: Program {
             }
         case let .scrollResponseContent(dy, dx):
             if let response = model.response {
-                let maxOffset = split(response.content, separator: "\n").count - 1
+                let maxOffset = response.content.chars.reduce(-1) { count, s in s.char == "\n" ? count + 1 : count }
                 model.contentOffset = Point(
                     x: min(maxOffset, max(0, model.contentOffset.x + dx)),
                     y: min(maxOffset, max(0, model.contentOffset.y + dy))
@@ -205,6 +205,7 @@ struct Suss: Program {
             else if !urlString.hasSuffix("&") {
                 urlString += "&"
             }
+
             urlString += urlParameters.map { param -> String in
                 let parts = split(param, separator: "=", limit: 2)
                 return parts.map({ part in
@@ -217,7 +218,7 @@ struct Suss: Program {
             entries -> Http.Header? in
             let kvp = split(entries, separator: ":", limit: 2, trim: true)
             guard kvp.count == 2 else { return nil }
-            return (kvp[0], kvp[1])
+            return Http.Header(name: kvp[0], value: kvp[1])
         })
 
         guard let url = URL(string: urlString) else { throw Error.invalidURL }
@@ -239,9 +240,15 @@ struct Suss: Program {
             do {
                 let (response, headers) = try result.map {
                     data,
-                    headers -> (String, Http.Headers) in
+                    headers -> (TextType, Http.Headers) in
                     if let str = String(data: data, encoding: .utf8) {
-                        return (str, headers)
+                        var colorizer: Colorizer = DefaultColorizer()
+                        if let contentType = headers.first(where: { $0.is(.contentType) }) {
+                            if contentType.value.hasPrefix("application/json") {
+                                colorizer = JsonColorizer()
+                            }
+                        }
+                        return (colorizer.process(str), headers)
                     }
                     throw Error.cannotDecode
                 }.unwrap()
@@ -392,9 +399,9 @@ struct Suss: Program {
         var responseContent: [Component] = []
         if let response = model.response {
             var headerString = AttrText()
-            response.headers.forEach { key, value in
-                headerString.append(Text(key, [.bold]))
-                headerString.append(": \(value)\n")
+            response.headers.forEach { header in
+                headerString.append(Text(header.name, [.bold]))
+                headerString.append(": \(header.value)\n")
             }
             responseHeaders.append(LabelView(text: headerString))
             responseContent.append(LabelView(text: response.content))
