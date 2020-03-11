@@ -10,8 +10,8 @@ let package = Package(
         .executable(name: "Suss", targets: ["Suss"]),
     ],
     dependencies: [
-        // .package(url: "https://github.com/colinta/Ashen.git", .branch("master")),
-        .package(path: "../Ashen"),
+        .package(url: "https://github.com/colinta/Ashen.git", .branch("master")),
+        // .package(path: "../Ashen"),
     ],
     targets: [
         .target(name: "Suss", dependencies: ["Ashen"]),
