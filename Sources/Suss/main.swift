@@ -2,16 +2,67 @@
 ///  main.swift
 //
 
-import Darwin
 import Ashen
+import ArgumentParser
 
-let args = Swift.CommandLine.arguments
-let cmd: String = (args.count > 1 ? args[1] : "demo")
+struct Main: ParsableCommand {
+    enum Error: Swift.Error {
+        case exit
+        case unknownMethod(String)
+    }
 
-let app = App(program: Suss(), screen: TermboxScreen())
-let exitState = app.run()
+    @Argument()
+    var url: String?
 
-switch exitState {
-case .quit: exit(EX_OK)
-case .error: exit(EX_IOERR)
+    @Option(name: [.customShort("X"), .customLong("request")], default: "GET")
+    var method: String
+
+    @Option(name: [.customShort("p"), .customLong("param")])
+    var params: [String]
+
+    @Option(name: .shortAndLong)
+    var data: [String]
+
+    @Option(name: [.customShort("H"), .customLong("header")])
+    var headers: [String]
+
+    func run() throws {
+        let httpMethod: Http.Method
+        switch method.lowercased() {
+        case "get":
+            httpMethod = .get
+        case "post":
+            httpMethod = .post
+        case "put":
+            httpMethod = .put
+        case "patch":
+            httpMethod = .patch
+        case "delete":
+            httpMethod = .delete
+        case "head":
+            httpMethod = .head
+        case "options":
+            httpMethod = .options
+        default:
+            throw Error.unknownMethod(method)
+        }
+
+        let model = Suss.Model(
+            url: url ?? "",
+            httpMethod: httpMethod,
+            urlParameters: params.joined(separator: "\n"),
+            body: data.joined(separator: "\n"),
+            headers: headers.joined(separator: "\n")
+        )
+
+        let app = App(program: Suss(model), screen: TermboxScreen())
+        switch app.run() {
+        case .quit:
+            break
+        case .error:
+            throw Error.exit
+        }
+    }
 }
+
+Main.main()

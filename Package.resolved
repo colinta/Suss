@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "swift-argument-parser",
+        "repositoryURL": "https://github.com/apple/swift-argument-parser",
+        "state": {
+          "branch": "master",
+          "revision": "164f9a71ec5fbac2df2962e4af83c885a2588c0b",
+          "version": null
+        }
+      },
+      {
         "package": "Termbox",
         "repositoryURL": "https://github.com/colinta/Termbox.git",
         "state": {

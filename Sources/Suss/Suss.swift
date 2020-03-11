@@ -97,6 +97,20 @@ struct Suss: Program {
             }
         }
 
+        init(
+            url: String,
+            httpMethod: Http.Method,
+            urlParameters: String,
+            body: String,
+            headers: String
+        ) {
+            self.url = url
+            self.httpMethod = httpMethod
+            self.urlParameters = urlParameters
+            self.body = body
+            self.headers = headers
+        }
+
         init() {
         }
     }
@@ -126,8 +140,31 @@ struct Suss: Program {
         rightSide: ""
     )
 
+    var initialModel: Model?
+
+    init() {
+        self.initialModel = nil
+    }
+
+    init(_ initialModel: Model) {
+        self.initialModel = initialModel
+    }
+
     func initial() -> (Model, [Command]) {
-        (Model(), [])
+        if var initialModel = initialModel, !initialModel.url.isEmpty {
+            do {
+                initialModel.active = .responseBody
+                let (model, cmd, _) = try submit(model: &initialModel)
+                return (model, cmd)
+            }
+            catch {
+                initialModel.error = (error as? Error)?.description
+                return (initialModel, [])
+            }
+        }
+        else {
+            return (Model(), [])
+        }
     }
 
     func update(model: inout Model, message: Message)
@@ -138,7 +175,7 @@ struct Suss: Program {
             return (model, [], .quit)
         case .submit:
             do {
-                return try submit(model: &model, message: message)
+                return try submit(model: &model)
             }
             catch {
                 model.error = (error as? Error)?.description
@@ -207,7 +244,7 @@ struct Suss: Program {
         return (model, [], .continue)
     }
 
-    func submit(model: inout Model, message: Message) throws
+    func submit(model: inout Model) throws
         -> (Model, [Command], LoopState)
     {
         var urlString = model.url
@@ -400,7 +437,6 @@ struct Suss: Program {
         }
         else if model.requestSent {
             topLevelComponents = [
-                SpinnerView(at: .bottomLeft())
             ]
         }
         else {
@@ -415,6 +451,7 @@ struct Suss: Program {
         var responseContent: [Component] = [
             OnComponentResize({ size in Message.responseComponentSize(size) }),
         ]
+
         if let response = model.response {
             var headerString = AttrText()
             response.headers.forEach { header in
@@ -423,6 +460,9 @@ struct Suss: Program {
             }
             responseHeaders.append(LabelView(text: headerString))
             responseContent.append(LabelView(text: response.content))
+        }
+        else if model.requestSent {
+            responseContent.append(SpinnerView(at: .middleCenter()))
         }
 
         if activeInput == .responseHeaders {
