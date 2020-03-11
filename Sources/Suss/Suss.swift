@@ -28,6 +28,8 @@ struct Suss: Program {
         case onChange(Model.Input, String)
         case scrollResponseHeaders(Int, Int)
         case scrollResponseContent(Int, Int)
+        case scrollTopResponseContent
+        case responseComponentSize(Size)
     }
 
     struct Model {
@@ -58,6 +60,7 @@ struct Suss: Program {
         var requestSent: Bool { return httpCommand != nil }
 
         var response: (content: TextType, headers: Http.Headers)?
+        var responseComponentSize: Size?
         var headersOffset = Point(x: 0, y: 0)
         var contentOffset = Point(x: 0, y: 0)
 
@@ -180,12 +183,23 @@ struct Suss: Program {
             }
         case let .scrollResponseContent(dy, dx):
             if let response = model.response {
-                let maxOffset = response.content.chars.reduce(-1) { count, s in s.char == "\n" ? count + 1 : count }
+                let height: Int
+                if let maxHeight = model.responseComponentSize?.height {
+                    height = maxHeight
+                }
+                else {
+                    height = 1
+                }
+                let maxOffset = response.content.chars.reduce(-height) { count, s in s.char == "\n" ? count + 1 : count }
                 model.contentOffset = Point(
                     x: min(maxOffset, max(0, model.contentOffset.x + dx)),
                     y: min(maxOffset, max(0, model.contentOffset.y + dy))
                 )
             }
+        case .scrollTopResponseContent:
+            model.contentOffset = Point(x: 0, y: 0)
+        case let .responseComponentSize(size):
+            model.responseComponentSize = size
         }
 
         return (model, [], .continue)
@@ -396,7 +410,9 @@ struct Suss: Program {
         }
 
         var responseHeaders: [Component] = []
-        var responseContent: [Component] = []
+        var responseContent: [Component] = [
+            OnComponentResize({ size in Message.responseComponentSize(size) }),
+        ]
         if let response = model.response {
             var headerString = AttrText()
             response.headers.forEach { header in
@@ -423,6 +439,16 @@ struct Suss: Program {
                 OnKeyPress(.down, { return Message.scrollResponseContent(+1, 0) }),
                 OnKeyPress(.right, { return Message.scrollResponseContent(0, +1) }),
             ]
+
+            if let size = model.responseComponentSize {
+                responseContent += [
+                    OnKeyPress(.pageUp, { return Message.scrollResponseContent(-(size.height - 1), 0) }),
+                    OnKeyPress(.pageDown, { return Message.scrollResponseContent(size.height - 1, 0) }),
+                    OnKeyPress(.alt(.left), { return Message.scrollResponseContent(0, -(size.width - 1)) }),
+                    OnKeyPress(.alt(.right), { return Message.scrollResponseContent(0, size.width - 1) }),
+                    OnKeyPress(.space, { return Message.scrollResponseContent(size.height - 1, 0) }),
+                ]
+            }
         }
 
         return Window(
