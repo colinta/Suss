@@ -5,6 +5,7 @@
 import Ashen
 import Foundation
 
+let Version = "1.0.0"
 
 struct Suss: Program {
     enum Error: Swift.Error {
@@ -63,7 +64,7 @@ struct Suss: Program {
         var error: String?
         var lastSentURL: String?
         var status: String {
-            var status = "[Suss v1.0.0]"
+            var status = "[Suss v\(Version)]"
             if let lastSentURL = lastSentURL {
                 status += " \(lastSentURL)"
             }
