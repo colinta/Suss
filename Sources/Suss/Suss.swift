@@ -249,7 +249,8 @@ struct Suss: Program {
                 height = model.responseHeadersSize?.height ?? 0
                 prevOffset = model.headersOffset
 
-                lines = ["status-code: \(response.statusCode)", "EOF"] + response.headers.map { "\($0.name)=\($0.value)" }
+                lines = ["status-code: \(response.statusCode)", "EOF"]
+                    + response.headers.map { "\($0.name)=\($0.value)" }
             case .responseBody:
                 width = model.responseBodySize?.width ?? 0
                 height = model.responseBodySize?.height ?? 0
@@ -264,7 +265,7 @@ struct Suss: Program {
                 lines = []
             }
 
-            let maxHorizontalOffset =  lines.reduce(0) { maxLen, line in
+            let maxHorizontalOffset = lines.reduce(0) { maxLen, line in
                 max(maxLen, line.count)
             } - width
             let maxVerticalOffset = lines.count - height
@@ -346,7 +347,9 @@ struct Suss: Program {
         let cmd = Http(url: url, options: options) { result in
             do {
                 let (statusCode, headers, response) = try result.map {
-                    statusCode, headers, data -> (Int, Http.Headers, TextType) in
+                    statusCode,
+                    headers,
+                    data -> (Int, Http.Headers, TextType) in
                     if let str = String(data: data, encoding: .utf8) {
                         var colorizer: Colorizer = DefaultColorizer()
                         if let contentType = headers.first(where: { $0.is(.contentType) }) {
@@ -525,7 +528,9 @@ struct Suss: Program {
             responseContent.append(SpinnerView(at: .middleCenter()))
         }
 
-        if activeInput == .responseHeaders || activeInput == .responseBody, let activeInput = activeInput {
+        if activeInput == .responseHeaders || activeInput == .responseBody,
+            let activeInput = activeInput
+        {
             topLevelComponents += [
                 OnKeyPress(.up, { Message.scroll(activeInput, -1, 0) }),
                 OnKeyPress(.left, { Message.scroll(activeInput, 0, -1) }),

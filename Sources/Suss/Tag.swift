@@ -97,7 +97,8 @@ enum State: String {
         case .doctype: return regexFind(input: str.lowercased(), pattern: "^<!doctype .*?>") ?? ""
         case .end: return ""
         case .tagOpen: return regexFind(input: str, pattern: "^<[a-zA-Z]([-_]?[a-zA-Z0-9])*") ?? ""
-        case .tagClose: return regexFind(input: str, pattern: "^</[a-zA-Z]([-_]?[a-zA-Z0-9])*>") ?? ""
+        case .tagClose:
+            return regexFind(input: str, pattern: "^</[a-zA-Z]([-_]?[a-zA-Z0-9])*>") ?? ""
         case .tagWs: return regexFind(input: str, pattern: "^[ \t\n]+") ?? ""
         case .tagGt: return regexFind(input: str, pattern: "^>") ?? ""
         case .singleton: return regexFind(input: str, pattern: "^/>") ?? ""
@@ -106,12 +107,14 @@ enum State: String {
         case .attrEq: return regexFind(input: str, pattern: "^=") ?? ""
         case .attrDqt: return regexFind(input: str, pattern: "^\"") ?? ""
         case .attrSqt: return regexFind(input: str, pattern: "^'") ?? ""
-        case .attrValue: return regexFind(input: str, pattern: "^[a-zA-Z0-9]([-_]?[a-zA-Z0-9])*") ?? ""
+        case .attrValue:
+            return regexFind(input: str, pattern: "^[a-zA-Z0-9]([-_]?[a-zA-Z0-9])*") ?? ""
         case .attrDvalue: return regexFind(input: str, pattern: "^[^\"]*") ?? ""
         case .attrSvalue: return regexFind(input: str, pattern: "^[^']*") ?? ""
         case .attrCdqt: return regexFind(input: str, pattern: "^\"") ?? ""
         case .attrCsqt: return regexFind(input: str, pattern: "^'") ?? ""
-        case .cdata: return regexFind(input: str, pattern: "^(//)?<!\\[CDATA\\[([^>]|>)*?//]]>") ?? ""
+        case .cdata:
+            return regexFind(input: str, pattern: "^(//)?<!\\[CDATA\\[([^>]|>)*?//]]>") ?? ""
         case .text: return regexFind(input: str, pattern: "^(.|\n)+?($|(?=<[!/a-zA-Z]))") ?? ""
         case .ieOpen: return regexFind(input: str, pattern: "^<!(?:--)?\\[if.*?\\[>") ?? ""
         case .ieClose: return regexFind(input: str, pattern: "^<!\\[endif\\[(?:--)?>") ?? ""
@@ -380,7 +383,13 @@ func regexFind(input: String, pattern: String) -> String? {
 
 func regexAllGroups(input: String, pattern: String) -> [String] {
     guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return [] }
-    guard let match = regex.firstMatch(in: input, options: [], range: NSRange(input.startIndex..<input.endIndex, in: input)) else { return [] }
+    guard
+        let match = regex.firstMatch(
+            in: input,
+            options: [],
+            range: NSRange(input.startIndex..<input.endIndex, in: input)
+        )
+    else { return [] }
 
     return (0..<match.numberOfRanges).compactMap { i in
         guard let range = Range(match.range(at: i), in: input) else { return nil }
