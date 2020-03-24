@@ -125,7 +125,11 @@ class JsonColorizer: Colorizer {
                 }
                 else if rem[rem.startIndex] == c {
                     let nextRemainder = String(rem.dropFirst())
-                    state = .boolean(val, found + String(rem[rem.startIndex]), String(nextRemainder))
+                    state = .boolean(
+                        val,
+                        found + String(rem[rem.startIndex]),
+                        String(nextRemainder)
+                    )
                 }
                 else {
                     for err in found + rem {

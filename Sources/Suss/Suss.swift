@@ -58,7 +58,7 @@ struct Suss: Program {
         var body: String = ""
         var bodyList: [String] { split(body, separator: "\n") }
         var headers: String = ""
-        var headersList: [String] { split(headers, separator: "\n")}
+        var headersList: [String] { split(headers, separator: "\n") }
 
         var httpCommand: Http?
         var requestSent: Bool { httpCommand != nil }
@@ -177,24 +177,27 @@ struct Suss: Program {
         switch message {
         case .quit:
             let m = model
-            return (model, [], .quitAnd() {
-                print("suss", terminator: "")
-                if m.httpMethod != .get {
-                    print(" -x \(m.httpMethod.rawValue)", terminator: "")
+            return (
+                model, [],
+                .quitAnd() {
+                    print("suss", terminator: "")
+                    if m.httpMethod != .get {
+                        print(" -x \(m.httpMethod.rawValue)", terminator: "")
+                    }
+                    print(" \"\(m.url)\"", terminator: "")
+                    for header in m.headersList {
+                        print(" \\\n -H \(header)", terminator: "")
+                    }
+                    for query in m.urlParametersList {
+                        print(" \\\n -p \(query)", terminator: "")
+                    }
+                    for data in m.bodyList {
+                        print(" \\\n --data \(data)", terminator: "")
+                    }
+                    print("")
+                    return .quit
                 }
-                print(" \"\(m.url)\"", terminator: "")
-                for header in m.headersList {
-                    print(" \\\n -H \(header)", terminator: "")
-                }
-                for query in m.urlParametersList {
-                    print(" \\\n -p \(query)", terminator: "")
-                }
-                for data in m.bodyList {
-                    print(" \\\n --data \(data)", terminator: "")
-                }
-                print("")
-                return .quit
-            })
+            )
         case .submit:
             do {
                 return try submit(model: &model)
@@ -249,12 +252,18 @@ struct Suss: Program {
             let height = model.responseComponentSize?.height ?? 1
 
             let content = response.content.chars.map { $0.char ?? "" }.joined(separator: "")
-            let maxHorizontalOffset = max(0, split(content, separator: "\n").reduce(0) { maxLen, line in
-                max(maxLen, line.count)
-            } - width)
-            let maxVerticalOffset = max(0, response.content.chars.reduce(-height) { count, s in
-                s.char == "\n" ? count + 1 : count
-            })
+            let maxHorizontalOffset = max(
+                0,
+                split(content, separator: "\n").reduce(0) { maxLen, line in
+                    max(maxLen, line.count)
+                } - width
+            )
+            let maxVerticalOffset = max(
+                0,
+                response.content.chars.reduce(-height) { count, s in
+                    s.char == "\n" ? count + 1 : count
+                }
+            )
             model.contentOffset = Point(
                 x: min(maxHorizontalOffset, max(0, model.contentOffset.x + dx)),
                 y: min(maxVerticalOffset, max(0, model.contentOffset.y + dy))
@@ -522,44 +531,54 @@ struct Suss: Program {
 
         return Window(
             components: [
-                Clickable(Box(
-                    at: .topLeft(x: 0, y: 0),
-                    size: DesiredSize(width: screenSize.width, height: 2),
-                    border: fullBorder,
-                    label: urlLabel,
-                    components: [urlInput]
-                )) { Message.focusInput(.url) },
-                Clickable(Box(
-                    at: .topLeft(x: 0, y: 3),
-                    size: DesiredSize(width: maxSideWidth, height: 2),
-                    border: sideBorder,
-                    label: methodLabel,
-                    components: httpMethodInputs
-                )) { Message.focusInput(.httpMethod) },
+                Clickable(
+                    Box(
+                        at: .topLeft(x: 0, y: 0),
+                        size: DesiredSize(width: screenSize.width, height: 2),
+                        border: fullBorder,
+                        label: urlLabel,
+                        components: [urlInput]
+                    )
+                ) { Message.focusInput(.url) },
+                Clickable(
+                    Box(
+                        at: .topLeft(x: 0, y: 3),
+                        size: DesiredSize(width: maxSideWidth, height: 2),
+                        border: sideBorder,
+                        label: methodLabel,
+                        components: httpMethodInputs
+                    )
+                ) { Message.focusInput(.httpMethod) },
                 GridLayout(
                     at: .topLeft(x: 0, y: 6),
                     size: Size(width: requestWidth, height: remainingHeight),
                     rows: [
                         .row([
-                            Clickable(Box(
-                                border: sideBorder,
-                                label: requestParametersLabel,
-                                components: [urlParametersInput]
-                            )) { Message.focusInput(.urlParameters) }
+                            Clickable(
+                                Box(
+                                    border: sideBorder,
+                                    label: requestParametersLabel,
+                                    components: [urlParametersInput]
+                                )
+                            ) { Message.focusInput(.urlParameters) }
                         ]),
                         .row([
-                            Clickable(Box(
-                                border: sideBorder,
-                                label: requestBodyLabel,
-                                components: [bodyInput]
-                            )) { Message.focusInput(.body) }
+                            Clickable(
+                                Box(
+                                    border: sideBorder,
+                                    label: requestBodyLabel,
+                                    components: [bodyInput]
+                                )
+                            ) { Message.focusInput(.body) }
                         ]),
                         .row([
-                            Clickable(Box(
-                                border: sideBorder,
-                                label: requestHeadersLabel,
-                                components: [headersInput]
-                            )) { Message.focusInput(.headers) }
+                            Clickable(
+                                Box(
+                                    border: sideBorder,
+                                    label: requestHeadersLabel,
+                                    components: [headersInput]
+                                )
+                            ) { Message.focusInput(.headers) }
                         ]),
                     ]
                 ),
@@ -570,21 +589,25 @@ struct Suss: Program {
                         .row(
                             weight: .fixed(10),
                             [
-                                Clickable(Box(
-                                    border: sideBorder,
-                                    label: responseHeadersLabel,
-                                    components: responseHeaders,
-                                    scrollOffset: model.headersOffset
-                                )) { Message.focusInput(.responseHeaders) }
+                                Clickable(
+                                    Box(
+                                        border: sideBorder,
+                                        label: responseHeadersLabel,
+                                        components: responseHeaders,
+                                        scrollOffset: model.headersOffset
+                                    )
+                                ) { Message.focusInput(.responseHeaders) }
                             ]
                         ),
                         .row([
-                            Clickable(Box(
-                                border: sideBorder,
-                                label: responseBodyLabel,
-                                components: responseContent,
-                                scrollOffset: model.contentOffset
-                            )) { Message.focusInput(.responseBody) }
+                            Clickable(
+                                Box(
+                                    border: sideBorder,
+                                    label: responseBodyLabel,
+                                    components: responseContent,
+                                    scrollOffset: model.contentOffset
+                                )
+                            ) { Message.focusInput(.responseBody) }
                         ]),
                     ]
                 ),
