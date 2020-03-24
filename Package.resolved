@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Ashen",
+        "repositoryURL": "https://github.com/colinta/Ashen.git",
+        "state": {
+          "branch": "master",
+          "revision": "c15e418e313d9ba30f2024dac83e088d4fc73140",
+          "version": null
+        }
+      },
+      {
         "package": "swift-argument-parser",
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
