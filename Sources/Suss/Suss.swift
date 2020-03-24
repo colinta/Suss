@@ -536,7 +536,10 @@ struct Suss: Program {
                 OnKeyPress(.left, { Message.scroll(activeInput, 0, -1) }),
                 OnKeyPress(.down, { Message.scroll(activeInput, +1, 0) }),
                 OnKeyPress(.right, { Message.scroll(activeInput, 0, +1) }),
-                OnKeyPress(.ctrl(.a), { Message.scrollTop(activeInput) }),
+                OnKeyPress(.ctrl(.a), { Message.scroll(activeInput, 0, Int.min) }),
+                OnKeyPress(.ctrl(.e), { Message.scroll(activeInput, 0, Int.max) }),
+                OnKeyPress(.home, { Message.scrollTop(activeInput) }),
+                OnKeyPress(.end, { Message.scroll(activeInput, Int.max, 0) }),
             ]
 
             if let size = model.responseBodySize {
