@@ -24,31 +24,36 @@ class JsonColorizer: Colorizer {
         case unicode(String)  // \u0000
         case escaped(String)  // \\, \/, etc
         case number(String)
+        case boolean(Bool)
 
         case invalid(String)
 
         var attrChar: TextType {
             switch self {
             case let .whitespace(c):
-                return AttrChar(c, [])
+                return AttrChar(c)
             case let .object(c):
-                return AttrChar(c, [.bold])
+                return AttrChar(c)
             case let .array(c):
-                return AttrChar(c, [.bold])
+                return AttrChar(c)
             case .comma:
                 return AttrChar(",", [.bold])
             case .colon:
                 return AttrChar(":", [.bold])
             case .quote:
-                return AttrChar("\"", [.foreground(.blue)])
+                return AttrChar("\"", [.foreground(.red)])
             case let .char(c):
-                return AttrChar(c, [.foreground(.blue)])
+                return AttrChar(c, [.foreground(.red)])
             case let .unicode(str):
                 return Text("\\u\(str)", [.foreground(.blue), .bold])
             case let .escaped(c):
                 return Text("\\\(c)", [.foreground(.blue), .bold])
             case let .number(c):
                 return AttrChar(c, [.foreground(.cyan)])
+            case .boolean(false):
+                return Text("false", [.foreground(.yellow), .bold])
+            case .boolean(true):
+                return Text("true", [.foreground(.yellow), .bold])
             case let .invalid(c):
                 return AttrChar(c, [.foreground(.white), .background(.red), .bold])
             }
@@ -59,6 +64,7 @@ class JsonColorizer: Colorizer {
         case `default`
         case string
         case escaping
+        case boolean(Bool, String, String)
         case unicode(String)
 
         case invalid
@@ -112,8 +118,27 @@ class JsonColorizer: Colorizer {
                 default:
                     tokens.append(.char(c.description))
                 }
+            case let .boolean(val, found, rem):
+                if rem == "" {
+                    tokens.append(.boolean(val))
+                    state = .default
+                }
+                else if rem[rem.startIndex] == c {
+                    let nextRemainder = String(rem.dropFirst())
+                    state = .boolean(val, found + String(rem[rem.startIndex]), String(nextRemainder))
+                }
+                else {
+                    for err in found + rem {
+                        tokens.append(.char(err.description))
+                    }
+                    state = .invalid
+                }
             case .default:
                 switch c {
+                case "t":
+                    state = .boolean(true, "t", "rue")
+                case "f":
+                    state = .boolean(false, "f", "alse")
                 case "\n", "\r":
                     tokens.append(.whitespace("\n"))
                 case " ", "\t":
