@@ -20,6 +20,7 @@ struct Suss: Program {
         case submit
         case nextInput
         case prevInput
+        case focusInput(Model.Input)
         case nextMethod
         case prevMethod
         case clearError
@@ -183,13 +184,13 @@ struct Suss: Program {
                 }
                 print(" \"\(m.url)\"", terminator: "")
                 for header in m.headersList {
-                    print(" \\\n    -H \(header)", terminator: "")
+                    print(" \\\n -H \(header)", terminator: "")
                 }
                 for query in m.urlParametersList {
-                    print(" \\\n    -p \(query)", terminator: "")
+                    print(" \\\n -p \(query)", terminator: "")
                 }
                 for data in m.bodyList {
-                    print(" \\\n    --data \(data)", terminator: "")
+                    print(" \\\n --data \(data)", terminator: "")
                 }
                 print("")
                 return .quit
@@ -212,6 +213,8 @@ struct Suss: Program {
             model.active = model.active.next
         case .prevInput:
             model.active = model.active.prev
+        case let .focusInput(input):
+            model.active = input
         case .nextMethod:
             model.httpMethod = model.nextMethod
         case .prevMethod:
@@ -519,44 +522,44 @@ struct Suss: Program {
 
         return Window(
             components: [
-                Box(
+                Clickable(Box(
                     at: .topLeft(x: 0, y: 0),
                     size: DesiredSize(width: screenSize.width, height: 2),
                     border: fullBorder,
                     label: urlLabel,
                     components: [urlInput]
-                ),
-                Box(
+                )) { Message.focusInput(.url) },
+                Clickable(Box(
                     at: .topLeft(x: 0, y: 3),
                     size: DesiredSize(width: maxSideWidth, height: 2),
                     border: sideBorder,
                     label: methodLabel,
                     components: httpMethodInputs
-                ),
+                )) { Message.focusInput(.httpMethod) },
                 GridLayout(
                     at: .topLeft(x: 0, y: 6),
                     size: Size(width: requestWidth, height: remainingHeight),
                     rows: [
                         .row([
-                            Box(
+                            Clickable(Box(
                                 border: sideBorder,
                                 label: requestParametersLabel,
                                 components: [urlParametersInput]
-                            )
+                            )) { Message.focusInput(.urlParameters) }
                         ]),
                         .row([
-                            Box(
+                            Clickable(Box(
                                 border: sideBorder,
                                 label: requestBodyLabel,
                                 components: [bodyInput]
-                            )
+                            )) { Message.focusInput(.body) }
                         ]),
                         .row([
-                            Box(
+                            Clickable(Box(
                                 border: sideBorder,
                                 label: requestHeadersLabel,
                                 components: [headersInput]
-                            )
+                            )) { Message.focusInput(.headers) }
                         ]),
                     ]
                 ),
@@ -567,21 +570,21 @@ struct Suss: Program {
                         .row(
                             weight: .fixed(10),
                             [
-                                Box(
+                                Clickable(Box(
                                     border: sideBorder,
                                     label: responseHeadersLabel,
                                     components: responseHeaders,
                                     scrollOffset: model.headersOffset
-                                )
+                                )) { Message.focusInput(.responseHeaders) }
                             ]
                         ),
                         .row([
-                            Box(
+                            Clickable(Box(
                                 border: sideBorder,
                                 label: responseBodyLabel,
                                 components: responseContent,
                                 scrollOffset: model.contentOffset
-                            )
+                            )) { Message.focusInput(.responseBody) }
                         ]),
                     ]
                 ),
