@@ -240,22 +240,22 @@ struct Suss: Program {
                 )
             }
         case let .scrollResponseContent(dy, dx):
-            if let response = model.response {
-                let height: Int
-                if let maxHeight = model.responseComponentSize?.height {
-                    height = maxHeight
-                }
-                else {
-                    height = 1
-                }
-                let maxOffset = response.content.chars.reduce(-height) { count, s in
-                    s.char == "\n" ? count + 1 : count
-                }
-                model.contentOffset = Point(
-                    x: min(maxOffset, max(0, model.contentOffset.x + dx)),
-                    y: min(maxOffset, max(0, model.contentOffset.y + dy))
-                )
-            }
+            guard let response = model.response else { return (model, [], .continue) }
+
+            let width = model.responseComponentSize?.width ?? 1
+            let height = model.responseComponentSize?.height ?? 1
+
+            let content = response.content.chars.map { $0.char ?? "" }.joined(separator: "")
+            let maxHorizontalOffset = max(0, split(content, separator: "\n").reduce(0) { maxLen, line in
+                max(maxLen, line.count)
+            } - width)
+            let maxVerticalOffset = max(0, response.content.chars.reduce(-height) { count, s in
+                s.char == "\n" ? count + 1 : count
+            })
+            model.contentOffset = Point(
+                x: min(maxHorizontalOffset, max(0, model.contentOffset.x + dx)),
+                y: min(maxVerticalOffset, max(0, model.contentOffset.y + dy))
+            )
         case .scrollTopResponseContent:
             model.contentOffset = Point(x: 0, y: 0)
         case let .responseComponentSize(size):
