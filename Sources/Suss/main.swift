@@ -63,7 +63,7 @@ struct Main: ParsableCommand {
             headers: headers.joined(separator: "\n")
         )
 
-        let app = App(program: Suss(model), screen: TermboxScreen())
+        let app = App(program: Suss(model))
         switch app.run() {
         case .quit:
             break
