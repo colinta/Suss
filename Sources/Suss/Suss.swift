@@ -53,8 +53,11 @@ struct Suss: Program {
         var url: String = ""
         var httpMethod: Http.Method = .get
         var urlParameters: String = ""
+        var urlParametersList: [String] { split(urlParameters, separator: "\n") }
         var body: String = ""
+        var bodyList: [String] { split(body, separator: "\n") }
         var headers: String = ""
+        var headersList: [String] { split(headers, separator: "\n")}
 
         var httpCommand: Http?
         var requestSent: Bool { httpCommand != nil }
@@ -172,7 +175,25 @@ struct Suss: Program {
     {
         switch message {
         case .quit:
-            return (model, [], .quit)
+            let m = model
+            return (model, [], .quitAnd() {
+                print("suss", terminator: "")
+                if m.httpMethod != .get {
+                    print(" -x \(m.httpMethod.rawValue)", terminator: "")
+                }
+                print(" \"\(m.url)\"", terminator: "")
+                for header in m.headersList {
+                    print(" \\\n    -H \(header)", terminator: "")
+                }
+                for query in m.urlParametersList {
+                    print(" \\\n    -p \(query)", terminator: "")
+                }
+                for data in m.bodyList {
+                    print(" \\\n    --data \(data)", terminator: "")
+                }
+                print("")
+                return .quit
+            })
         case .submit:
             do {
                 return try submit(model: &model)
@@ -248,8 +269,7 @@ struct Suss: Program {
         -> (Model, [Command], LoopState)
     {
         var urlString = model.url
-
-        let urlParameters = split(model.urlParameters, separator: "\n")
+        let urlParameters = model.urlParametersList
 
         if urlParameters.count > 0 {
             if !urlString.contains("?") {
@@ -269,7 +289,7 @@ struct Suss: Program {
 
         let headers: Http.Headers = split(model.headers, separator: "\n").compactMap({
             entries -> Http.Header? in
-            let kvp = split(entries, separator: ":", limit: 2, trim: true)
+            let kvp = split(entries, separator: ":", limit: 2)
             guard kvp.count == 2 else { return nil }
             return Http.Header(name: kvp[0], value: kvp[1])
         })
@@ -587,10 +607,12 @@ extension Suss.Error {
     }
 }
 
-private func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = false)
+// can be given a 'limit' for splitting only once (i.e. headers and query
+// params) and always trims the returned strings
+private func split(_ string: String, separator: Character, limit: Int? = nil)
     -> [String]
 {
-    guard limit != 0 else { return [] }
+    guard (limit ?? 1) > 0 else { return [] }
 
     var count = 1
     return string.split(whereSeparator: { c -> Bool in
@@ -599,11 +621,9 @@ private func split(_ string: String, separator: Character, limit: Int? = nil, tr
         guard count < limit else { return false }
         count += 1
         return true
-    }).filter({ $0.count > 0 }).map({ chars in
-        let retval = String(chars)
-        if trim {
-            return retval.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
+    }).compactMap({ chars in
+        let retval = String(chars).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard retval.count > 0 else { return nil }
         return retval
     })
 }
