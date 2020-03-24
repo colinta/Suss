@@ -24,13 +24,13 @@ struct Suss: Program {
         case nextMethod
         case prevMethod
         case clearError
-        case received(TextType, Http.Headers)
+        case received(Int, Http.Headers, TextType)
         case receivedError(String)
         case onChange(Model.Input, String)
-        case scrollResponseHeaders(Int, Int)
-        case scrollResponseContent(Int, Int)
-        case scrollTopResponseContent
-        case responseComponentSize(Size)
+        case scroll(Model.Input, Int, Int)
+        case scrollTop(Model.Input)
+        case responseHeadersSize(Size)
+        case responseBodySize(Size)
     }
 
     struct Model {
@@ -56,17 +56,18 @@ struct Suss: Program {
         var urlParameters: String = ""
         var urlParametersList: [String] { split(urlParameters, separator: "\n") }
         var body: String = ""
-        var bodyList: [String] { split(body, separator: "\n") }
+        var bodyList: [String] { split(body, separator: "\n", trim: false) }
         var headers: String = ""
         var headersList: [String] { split(headers, separator: "\n") }
 
         var httpCommand: Http?
         var requestSent: Bool { httpCommand != nil }
 
-        var response: (content: TextType, headers: Http.Headers)?
-        var responseComponentSize: Size?
+        var response: (statusCode: Int, body: TextType, headers: Http.Headers)?
+        var responseHeadersSize: Size?
+        var responseBodySize: Size?
         var headersOffset = Point(x: 0, y: 0)
-        var contentOffset = Point(x: 0, y: 0)
+        var bodyOffset = Point(x: 0, y: 0)
 
         var error: String?
         var lastSentURL: String?
@@ -180,19 +181,18 @@ struct Suss: Program {
             return (
                 model, [],
                 .quitAnd() {
-                    print("suss", terminator: "")
+                    print("suss  '\(m.url)'", terminator: "")
                     if m.httpMethod != .get {
-                        print(" -x \(m.httpMethod.rawValue)", terminator: "")
+                        print(" -X \(m.httpMethod.rawValue)", terminator: "")
                     }
-                    print(" \"\(m.url)\"", terminator: "")
                     for header in m.headersList {
-                        print(" \\\n -H \(header)", terminator: "")
+                        print(" \\\n -H '\(header)'", terminator: "")
                     }
                     for query in m.urlParametersList {
-                        print(" \\\n -p \(query)", terminator: "")
+                        print(" \\\n -p '\(query)'", terminator: "")
                     }
                     for data in m.bodyList {
-                        print(" \\\n --data \(data)", terminator: "")
+                        print(" \\\n --data '\(data)'", terminator: "")
                     }
                     print("")
                     return .quit
@@ -206,9 +206,9 @@ struct Suss: Program {
                 model.error = (error as? Error)?.description
                 return (model, [], .continue)
             }
-        case let .received(response, headers):
+        case let .received(statusCode, headers, body):
             model.httpCommand = nil
-            model.response = (content: response, headers: headers)
+            model.response = (statusCode: statusCode, body: body, headers: headers)
         case let .receivedError(error):
             model.httpCommand = nil
             model.error = error
@@ -237,41 +237,63 @@ struct Suss: Program {
             default:
                 break
             }
-        case let .scrollResponseHeaders(dy, dx):
-            if let response = model.response {
-                let maxOffset = response.headers.count - 1
-                model.headersOffset = Point(
-                    x: min(maxOffset, max(0, model.headersOffset.x + dx)),
-                    y: min(maxOffset, max(0, model.headersOffset.y + dy))
-                )
-            }
-        case let .scrollResponseContent(dy, dx):
+        case let .scroll(input, dy, dx):
             guard let response = model.response else { return (model, [], .continue) }
 
-            let width = model.responseComponentSize?.width ?? 1
-            let height = model.responseComponentSize?.height ?? 1
+            let width: Int, height: Int
+            let prevOffset: Point
+            let lines: [String]
+            switch input {
+            case .responseHeaders:
+                width = model.responseHeadersSize?.width ?? 0
+                height = model.responseHeadersSize?.height ?? 0
+                prevOffset = model.headersOffset
 
-            let content = response.content.chars.map { $0.char ?? "" }.joined(separator: "")
-            let maxHorizontalOffset = max(
-                0,
-                split(content, separator: "\n").reduce(0) { maxLen, line in
-                    max(maxLen, line.count)
-                } - width
+                lines = ["status-code: \(response.statusCode)", "EOF"] + response.headers.map { "\($0.name)=\($0.value)" }
+            case .responseBody:
+                width = model.responseBodySize?.width ?? 0
+                height = model.responseBodySize?.height ?? 0
+                prevOffset = model.bodyOffset
+
+                let body = response.body.chars.map { $0.char ?? "" }.joined(separator: "")
+                lines = split(body, separator: "\n", trim: false) + ["EOF", "EOF"]
+            default:
+                width = 0
+                height = 0
+                prevOffset = .zero
+                lines = []
+            }
+
+            let maxHorizontalOffset =  lines.reduce(0) { maxLen, line in
+                max(maxLen, line.count)
+            } - width
+            let maxVerticalOffset = lines.count - height
+            let offset = Point(
+                x: max(0, min(maxHorizontalOffset, prevOffset.x + dx)),
+                y: max(0, min(maxVerticalOffset, prevOffset.y + dy))
             )
-            let maxVerticalOffset = max(
-                0,
-                response.content.chars.reduce(-height) { count, s in
-                    s.char == "\n" ? count + 1 : count
-                }
-            )
-            model.contentOffset = Point(
-                x: min(maxHorizontalOffset, max(0, model.contentOffset.x + dx)),
-                y: min(maxVerticalOffset, max(0, model.contentOffset.y + dy))
-            )
-        case .scrollTopResponseContent:
-            model.contentOffset = Point(x: 0, y: 0)
-        case let .responseComponentSize(size):
-            model.responseComponentSize = size
+
+            switch input {
+            case .responseHeaders:
+                model.headersOffset = offset
+            case .responseBody:
+                model.bodyOffset = offset
+            default:
+                break
+            }
+        case let .scrollTop(input):
+            switch input {
+            case .responseHeaders:
+                model.headersOffset = Point(x: 0, y: 0)
+            case .responseBody:
+                model.bodyOffset = Point(x: 0, y: 0)
+            default:
+                break
+            }
+        case let .responseBodySize(size):
+            model.responseBodySize = size
+        case let .responseHeadersSize(size):
+            model.responseHeadersSize = size
         }
 
         return (model, [], .continue)
@@ -323,21 +345,23 @@ struct Suss: Program {
 
         let cmd = Http(url: url, options: options) { result in
             do {
-                let (response, headers) = try result.map {
-                    data,
-                    headers -> (TextType, Http.Headers) in
+                let (statusCode, headers, response) = try result.map {
+                    statusCode, headers, data -> (Int, Http.Headers, TextType) in
                     if let str = String(data: data, encoding: .utf8) {
                         var colorizer: Colorizer = DefaultColorizer()
                         if let contentType = headers.first(where: { $0.is(.contentType) }) {
                             if contentType.value.hasPrefix("application/json") {
                                 colorizer = JsonColorizer()
                             }
+                            else if contentType.value.hasPrefix("text/html") {
+                                colorizer = HtmlColorizer()
+                            }
                         }
-                        return (colorizer.process(str), headers)
+                        return (statusCode, headers, colorizer.process(str))
                     }
                     throw Error.cannotDecode
                 }.unwrap()
-                return Message.received(response, headers)
+                return Message.received(statusCode, headers, response)
             }
             catch {
                 let errorDescription = (error as? Error)?.description ?? "Unknown error"
@@ -451,7 +475,7 @@ struct Suss: Program {
         let requestWidth = min(maxSideWidth, screenSize.width / 3)
         let responseWidth = screenSize.width - requestWidth
 
-        let topLevelComponents: [Component]
+        var topLevelComponents: [Component] = []
         if let error = model.error {
             topLevelComponents = [
                 OnKeyPress({ _ in Message.clearError }),
@@ -467,64 +491,59 @@ struct Suss: Program {
                 ),
             ]
         }
-        else if model.requestSent {
-            topLevelComponents = [
-            ]
-        }
         else {
             topLevelComponents = [
                 OnKeyPress(.esc, { Message.quit }),
-                OnKeyPress(.tab, { Message.nextInput }),
-                OnKeyPress(.backtab, { Message.prevInput }),
             ]
+            if !model.requestSent {
+                topLevelComponents += [
+                    OnKeyPress(.tab, { Message.nextInput }),
+                    OnKeyPress(.backtab, { Message.prevInput }),
+                ]
+            }
         }
 
-        var responseHeaders: [Component] = []
+        var responseHeaders: [Component] = [
+            OnComponentResize(Message.responseHeadersSize),
+        ]
         var responseContent: [Component] = [
-            OnComponentResize({ size in Message.responseComponentSize(size) }),
+            OnComponentResize(Message.responseBodySize),
         ]
 
         if let response = model.response {
-            var headerString = AttrText()
+            var headerString = AttrText(Text("Status-code: ", [.bold]))
+            headerString.append(Text("\(response.statusCode)\n"))
             response.headers.forEach { header in
                 headerString.append(Text(header.name, [.bold]))
                 headerString.append(": \(header.value)\n")
             }
+            headerString.append(Text("EOF\n", [.reverse]))
             responseHeaders.append(LabelView(text: headerString))
-            responseContent.append(LabelView(text: response.content))
+            responseContent.append(LabelView(text: response.body + Text("\nEOF", [.reverse])))
         }
         else if model.requestSent {
             responseContent.append(SpinnerView(at: .middleCenter()))
         }
 
-        if activeInput == .responseHeaders {
-            responseHeaders += [
-                OnKeyPress(.up, { Message.scrollResponseHeaders(-1, 0) }),
-                OnKeyPress(.left, { Message.scrollResponseHeaders(0, -1) }),
-                OnKeyPress(.down, { Message.scrollResponseHeaders(+1, 0) }),
-                OnKeyPress(.right, { Message.scrollResponseHeaders(0, +1) }),
-            ]
-        }
-
-        if activeInput == .responseBody {
-            responseContent += [
-                OnKeyPress(.up, { Message.scrollResponseContent(-1, 0) }),
-                OnKeyPress(.left, { Message.scrollResponseContent(0, -1) }),
-                OnKeyPress(.down, { Message.scrollResponseContent(+1, 0) }),
-                OnKeyPress(.right, { Message.scrollResponseContent(0, +1) }),
-                OnKeyPress(.ctrl(.a), { Message.scrollTopResponseContent }),
+        if activeInput == .responseHeaders || activeInput == .responseBody, let activeInput = activeInput {
+            topLevelComponents += [
+                OnKeyPress(.up, { Message.scroll(activeInput, -1, 0) }),
+                OnKeyPress(.left, { Message.scroll(activeInput, 0, -1) }),
+                OnKeyPress(.down, { Message.scroll(activeInput, +1, 0) }),
+                OnKeyPress(.right, { Message.scroll(activeInput, 0, +1) }),
+                OnKeyPress(.ctrl(.a), { Message.scrollTop(activeInput) }),
             ]
 
-            if let size = model.responseComponentSize {
-                responseContent += [
-                    OnKeyPress(.pageUp, { Message.scrollResponseContent(-(size.height - 1), 0) }),
-                    OnKeyPress(.pageDown, { Message.scrollResponseContent(size.height - 1, 0) }),
+            if let size = model.responseBodySize {
+                topLevelComponents += [
+                    OnKeyPress(.pageUp, { Message.scroll(activeInput, -(size.height - 1), 0) }),
+                    OnKeyPress(.pageDown, { Message.scroll(activeInput, size.height - 1, 0) }),
                     OnKeyPress(
                         .alt(.left),
-                        { Message.scrollResponseContent(0, -(size.width - 1)) }
+                        { Message.scroll(activeInput, 0, -(size.width - 1)) }
                     ),
-                    OnKeyPress(.alt(.right), { Message.scrollResponseContent(0, size.width - 1) }),
-                    OnKeyPress(.space, { Message.scrollResponseContent(size.height - 1, 0) }),
+                    OnKeyPress(.alt(.right), { Message.scroll(activeInput, 0, size.width - 1) }),
+                    OnKeyPress(.space, { Message.scroll(activeInput, size.height - 1, 0) }),
                 ]
             }
         }
@@ -605,7 +624,7 @@ struct Suss: Program {
                                     border: sideBorder,
                                     label: responseBodyLabel,
                                     components: responseContent,
-                                    scrollOffset: model.contentOffset
+                                    scrollOffset: model.bodyOffset
                                 )
                             ) { Message.focusInput(.responseBody) }
                         ]),
@@ -635,7 +654,7 @@ extension Suss.Error {
 
 // can be given a 'limit' for splitting only once (i.e. headers and query
 // params) and always trims the returned strings
-private func split(_ string: String, separator: Character, limit: Int? = nil)
+private func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = true)
     -> [String]
 {
     guard (limit ?? 1) > 0 else { return [] }
@@ -648,8 +667,13 @@ private func split(_ string: String, separator: Character, limit: Int? = nil)
         count += 1
         return true
     }).compactMap({ chars in
-        let retval = String(chars).trimmingCharacters(in: .whitespacesAndNewlines)
-        guard retval.count > 0 else { return nil }
-        return retval
+        if trim {
+            let retval = String(chars).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard retval.count > 0 else { return nil }
+            return retval
+        }
+        else {
+            return String(chars)
+        }
     })
 }
