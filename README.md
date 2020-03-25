@@ -30,10 +30,10 @@ suss https://maps.googleapis.com/maps/api/place/nearbysearch/json \
 Creates a session that looks like this:
 
 ```
-┌─URL────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│https://maps.googleapis.com/maps/api/place/nearbysearch/json                                                        │
+┌─URL────────────────────────────────────────────────────────────────────────────────────────────────────
+│https://maps.googleapis.com/maps/api/place/nearbysearch/json
 
-┌─Method───────────────────────────────┌─Response headers─────────────────────────────────────────────────────────────
+┌─Method───────────────────────────────┌─Response headers────────────────────────────────────────────────
 │GET POST PUT PATCH DELETE HEAD OPTIONS│Status-code: 200
  ---                                   │Vary: Accept-Language
 ┌─GET Parameters───────────────────────│Date: Tue, 24 Mar 2020 20:00:37 GMT
@@ -43,7 +43,7 @@ Creates a session that looks like this:
 │key=qwfpgjluyarstdhneiozxcvbkm12345678│x-xss-protection: 0
 │                                      │server-timing: gfet4t7; dur=12
 │                                      │Pragma: no-cache
-│                                      ┌─Response body────────────────────────────────────────────────────────────────
+│                                      ┌─Response body───────────────────────────────────────────────────
 ┌─POST Body────────────────────────────│{
 │                                      │   "error_message" : "The provided API key is invalid.",
 │                                      │   "html_attributions" : [],
@@ -58,6 +58,6 @@ Creates a session that looks like this:
 │                                      │
 │                                      │
 │                                      │
-[Suss v1.0.0] https://maps.googleapis.com/maps/api/place/nearbysearch/json?type=grocery%5For%5Fsupermarket&location=%3
+[Suss v1.0.0] https://maps.googleapis.com/maps/api/place/nearbysearch/json?type=grocery%5For%5Fsupermarke
 
 ```
