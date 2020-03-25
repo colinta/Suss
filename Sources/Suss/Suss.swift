@@ -497,6 +497,7 @@ struct Suss: Program {
         else {
             topLevelComponents = [
                 OnKeyPress(.esc, { Message.quit }),
+                OnKeyPress(.ctrl(.o), { Message.submit })
             ]
             if !model.requestSent {
                 topLevelComponents += [
