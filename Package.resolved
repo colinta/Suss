@@ -6,7 +6,7 @@
         "repositoryURL": "https://github.com/colinta/Ashen.git",
         "state": {
           "branch": "master",
-          "revision": "c15e418e313d9ba30f2024dac83e088d4fc73140",
+          "revision": "7b6b303af6d583ad9d69a31c833cc16c161d1fcb",
           "version": null
         }
       },
@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
           "branch": "master",
-          "revision": "164f9a71ec5fbac2df2962e4af83c885a2588c0b",
+          "revision": "4922eaa2db462df3eac54c38224b5e6d2b4676d1",
           "version": null
         }
       },
@@ -23,8 +23,8 @@
         "package": "Termbox",
         "repositoryURL": "https://github.com/colinta/Termbox.git",
         "state": {
-          "branch": "c0b4baf",
-          "revision": "c0b4baf778f1213d29558b6c7028312bf99b6e6b",
+          "branch": "master",
+          "revision": "441efc357f3328cc45043b5d17097afd58982094",
           "version": null
         }
       }
