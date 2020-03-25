@@ -159,8 +159,7 @@ struct Suss: Program {
         if var initialModel = initialModel, !initialModel.url.isEmpty {
             do {
                 initialModel.active = .responseBody
-                let (model, cmd, _) = try submit(model: &initialModel)
-                return (model, cmd)
+                return try submit(model: &initialModel)
             }
             catch {
                 initialModel.error = (error as? Error)?.description
@@ -173,14 +172,12 @@ struct Suss: Program {
     }
 
     func update(model: inout Model, message: Message)
-        -> (Model, [Command], LoopState)
+        -> Update<Model>
     {
         switch message {
         case .quit:
             let m = model
-            return (
-                model, [],
-                .quitAnd() {
+            return .quitAnd {
                     print("suss  '\(m.url)'", terminator: "")
                     if m.httpMethod != .get {
                         print(" -X \(m.httpMethod.rawValue)", terminator: "")
@@ -197,14 +194,14 @@ struct Suss: Program {
                     print("")
                     return .quit
                 }
-            )
         case .submit:
             do {
-                return try submit(model: &model)
+                let (model, commands) = try submit(model: &model)
+                return .update(model, commands)
             }
             catch {
                 model.error = (error as? Error)?.description
-                return (model, [], .continue)
+                return .model(model)
             }
         case let .received(statusCode, headers, body):
             model.httpCommand = nil
@@ -238,7 +235,7 @@ struct Suss: Program {
                 break
             }
         case let .scroll(input, dy, dx):
-            guard let response = model.response else { return (model, [], .continue) }
+            guard let response = model.response else { return .noChange }
 
             let width: Int, height: Int
             let prevOffset: Point
@@ -297,11 +294,11 @@ struct Suss: Program {
             model.responseHeadersSize = size
         }
 
-        return (model, [], .continue)
+        return .model(model)
     }
 
     func submit(model: inout Model) throws
-        -> (Model, [Command], LoopState)
+        -> (Model, [Command])
     {
         var urlString = model.url
         let urlParameters = model.urlParametersList
@@ -373,7 +370,7 @@ struct Suss: Program {
         }
 
         model.httpCommand = cmd
-        return (model, [cmd], .continue)
+        return (model, [cmd])
     }
 
     func render(model: Model, in screenSize: Size) -> Component {
