@@ -192,7 +192,6 @@ struct Suss: Program {
                         print(" \\\n --data '\(data)'", terminator: "")
                     }
                     print("")
-                    return .quit
                 }
         case .submit:
             do {
@@ -343,25 +342,20 @@ struct Suss: Program {
 
         let cmd = Http(url: url, options: options) { result in
             do {
-                let (statusCode, headers, response) = try result.map {
-                    statusCode,
-                    headers,
-                    data -> (Int, Http.Headers, TextType) in
-                    if let str = String(data: data, encoding: .utf8) {
-                        var colorizer: Colorizer = DefaultColorizer()
-                        if let contentType = headers.first(where: { $0.is(.contentType) }) {
-                            if contentType.value.hasPrefix("application/json") {
-                                colorizer = JsonColorizer()
-                            }
-                            else if contentType.value.hasPrefix("text/html") {
-                                colorizer = HtmlColorizer()
-                            }
-                        }
-                        return (statusCode, headers, colorizer.process(str))
+                let (statusCode, headers, data) = try result.get()
+                guard let str = String(data: data, encoding: .utf8) else { throw Error.cannotDecode }
+
+                var colorizer: Colorizer = DefaultColorizer()
+                if let contentType = headers.first(where: { $0.is(.contentType) }) {
+                    if contentType.value.hasPrefix("application/json") {
+                        colorizer = JsonColorizer()
                     }
-                    throw Error.cannotDecode
-                }.unwrap()
-                return Message.received(statusCode, headers, response)
+                    else if contentType.value.hasPrefix("text/html") {
+                        colorizer = HtmlColorizer()
+                    }
+                }
+
+                return Message.received(statusCode, headers, colorizer.process(str))
             }
             catch {
                 let errorDescription = (error as? Error)?.description ?? "Unknown error"

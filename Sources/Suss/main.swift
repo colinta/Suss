@@ -7,7 +7,6 @@ import ArgumentParser
 
 struct Main: ParsableCommand {
     enum Error: Swift.Error {
-        case exit
         case unknownMethod(String)
     }
 
@@ -64,12 +63,7 @@ struct Main: ParsableCommand {
         )
 
         let app = App(program: Suss(model))
-        switch app.run() {
-        case .quit:
-            break
-        case .error:
-            throw Error.exit
-        }
+        try app.run()
     }
 }
 

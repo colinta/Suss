@@ -6,7 +6,7 @@
         "repositoryURL": "https://github.com/colinta/Ashen.git",
         "state": {
           "branch": "master",
-          "revision": "f79a556e626b09f3d6c5a84bdbe9c92909437a31",
+          "revision": "be38720b094004241583a518c0f85bf5f764c0ee",
           "version": null
         }
       },
@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {
           "branch": "master",
-          "revision": "4922eaa2db462df3eac54c38224b5e6d2b4676d1",
+          "revision": "1081d08b1d716e6a68a9cbc258bb309359fbae1e",
           "version": null
         }
       },
