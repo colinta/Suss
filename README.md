@@ -1,6 +1,6 @@
 # Suss
 
-Example using Ashen to create an interactive cUrl-like application.  You can run the app with no arguments, when you exit (`Esc`) it will output the equivalent command line arguments to "restore" your session.
+Example using [Ashen][] to create an interactive cUrl-like application. You can run the app with no arguments, when you exit (`Esc`) it will output the equivalent command line arguments to "restore" your session.
 
 Press `Enter` from the URL or Method fields to send the request, or `ctrl+o` from any input
 
@@ -18,10 +18,9 @@ suss [URL] \
     -H 'header: value' \
     [-H ...]
 
-# example
-suss https://maps.googleapis.com/maps/api/place/nearbysearch/json \
+# example - URL parameters can be assigned via `-p` or as part of the URL
+suss https://maps.googleapis.com/maps/api/place/nearbysearch/json?type=grocery_or_supermarket \
     -X GET \
-    -p type=grocery_or_supermarket \
     -p location=35.628750,-82.544296 \
     -p radius=40000 \
     -p key=qwfpgjluyarstdhneiozxcvbkm12345678...
@@ -61,3 +60,5 @@ Creates a session that looks like this:
 [Suss v1.0.0] https://maps.googleapis.com/maps/api/place/nearbysearch/json?type=grocery%5For%5Fsupermarke
 
 ```
+
+[ashen]: https://github.com/colinta/Ashen
