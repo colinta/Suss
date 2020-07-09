@@ -655,7 +655,7 @@ extension Suss.Error {
 
 // can be given a 'limit' for splitting only once (i.e. headers and query
 // params) and always trims the returned strings
-private func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = true)
+func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool = true)
     -> [String]
 {
     guard (limit ?? 1) > 0 else { return [] }

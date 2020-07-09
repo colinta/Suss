@@ -46,7 +46,27 @@ struct Main: ParsableCommand {
             throw Error.unknownMethod(method)
         }
 
-        let urlParameters: String
+        var params = self.params
+
+        let url: String
+        if let urlArg = self.url {
+            let urlAndQuery = split(urlArg, separator: "?", limit: 2)
+            url = urlAndQuery[0]
+            if urlAndQuery.count == 2 {
+                let urlParams = split(urlAndQuery[1], separator: "&")
+                if params.isEmpty {
+                    params += urlParams
+                }
+                else {
+                    params = urlParams
+                }
+            }
+        }
+        else {
+            url = ""
+        }
+
+        var urlParameters: String
         if params.isEmpty {
             urlParameters = ""
         }
@@ -55,7 +75,7 @@ struct Main: ParsableCommand {
         }
 
         let model = Suss.Model(
-            url: url ?? "",
+            url: url,
             httpMethod: httpMethod,
             urlParameters: urlParameters,
             body: data.joined(separator: "\n"),
