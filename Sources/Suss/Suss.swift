@@ -160,13 +160,11 @@ struct Suss: Program {
             do {
                 initialModel.active = .responseBody
                 return try submit(model: &initialModel)
-            }
-            catch {
+            } catch {
                 initialModel.error = (error as? Error)?.description
                 return (initialModel, [])
             }
-        }
-        else {
+        } else {
             return (Model(), [])
         }
     }
@@ -178,27 +176,26 @@ struct Suss: Program {
         case .quit:
             let m = model
             return .quitAnd {
-                    print("suss  '\(m.url)'", terminator: "")
-                    if m.httpMethod != .get {
-                        print(" -X \(m.httpMethod.rawValue)", terminator: "")
-                    }
-                    for header in m.headersList {
-                        print(" \\\n -H '\(header)'", terminator: "")
-                    }
-                    for query in m.urlParametersList {
-                        print(" \\\n -p '\(query)'", terminator: "")
-                    }
-                    for data in m.bodyList {
-                        print(" \\\n --data '\(data)'", terminator: "")
-                    }
-                    print("")
+                print("suss  '\(m.url)'", terminator: "")
+                if m.httpMethod != .get {
+                    print(" -X \(m.httpMethod.rawValue)", terminator: "")
                 }
+                for header in m.headersList {
+                    print(" \\\n -H '\(header)'", terminator: "")
+                }
+                for query in m.urlParametersList {
+                    print(" \\\n -p '\(query)'", terminator: "")
+                }
+                for data in m.bodyList {
+                    print(" \\\n --data '\(data)'", terminator: "")
+                }
+                print("")
+            }
         case .submit:
             do {
                 let (model, commands) = try submit(model: &model)
                 return .update(model, commands)
-            }
-            catch {
+            } catch {
                 model.error = (error as? Error)?.description
                 return .model(model)
             }
@@ -245,7 +242,8 @@ struct Suss: Program {
                 height = model.responseHeadersSize?.height ?? 0
                 prevOffset = model.headersOffset
 
-                lines = ["status-code: \(response.statusCode)", "EOF"]
+                lines =
+                    ["status-code: \(response.statusCode)", "EOF"]
                     + response.headers.map { "\($0.name)=\($0.value)" }
             case .responseBody:
                 width = model.responseBodySize?.width ?? 0
@@ -261,9 +259,10 @@ struct Suss: Program {
                 lines = []
             }
 
-            let maxHorizontalOffset = lines.reduce(0) { maxLen, line in
-                max(maxLen, line.count)
-            } - width
+            let maxHorizontalOffset =
+                lines.reduce(0) { maxLen, line in
+                    max(maxLen, line.count)
+                } - width
             let maxVerticalOffset = lines.count - height
             let offset = Point(
                 x: max(0, min(maxHorizontalOffset, prevOffset.x + dx)),
@@ -305,8 +304,7 @@ struct Suss: Program {
         if urlParameters.count > 0 {
             if !urlString.contains("?") {
                 urlString += "?"
-            }
-            else if !urlString.hasSuffix("&") {
+            } else if !urlString.hasSuffix("&") {
                 urlString += "&"
             }
 
@@ -333,7 +331,7 @@ struct Suss: Program {
 
         var options: Http.Options = [
             .method(model.httpMethod),
-            .headers(headers)
+            .headers(headers),
         ]
 
         if model.httpMethod != .get {
@@ -343,21 +341,21 @@ struct Suss: Program {
         let cmd = Http(url: url, options: options) { result in
             do {
                 let (statusCode, headers, data) = try result.get()
-                guard let str = String(data: data, encoding: .utf8) else { throw Error.cannotDecode }
+                guard let str = String(data: data, encoding: .utf8) else {
+                    throw Error.cannotDecode
+                }
 
                 var colorizer: Colorizer = DefaultColorizer()
                 if let contentType = headers.first(where: { $0.is(.contentType) }) {
                     if contentType.value.hasPrefix("application/json") {
                         colorizer = JsonColorizer()
-                    }
-                    else if contentType.value.hasPrefix("text/html") {
+                    } else if contentType.value.hasPrefix("text/html") {
                         colorizer = HtmlColorizer()
                     }
                 }
 
                 return Message.received(statusCode, headers, colorizer.process(str))
-            }
-            catch {
+            } catch {
                 let errorDescription = (error as? Error)?.description ?? "Unknown error"
                 return Message.receivedError(errorDescription)
             }
@@ -371,8 +369,7 @@ struct Suss: Program {
         let activeInput: Model.Input?
         if model.error != nil || model.requestSent {
             activeInput = nil
-        }
-        else {
+        } else {
             activeInput = model.active
         }
 
@@ -391,8 +388,7 @@ struct Suss: Program {
         let activeAttrs: [Attr]
         if activeInput == .httpMethod {
             activeAttrs = [.reverse]
-        }
-        else {
+        } else {
             activeAttrs = [.underline]
         }
 
@@ -401,8 +397,7 @@ struct Suss: Program {
         }.reduce([TextType]()) { (memo, httpMethodText) -> [TextType] in
             if memo.count > 0 {
                 return memo + [" ", httpMethodText]
-            }
-            else {
+            } else {
                 return [httpMethodText]
             }
         }
@@ -414,8 +409,7 @@ struct Suss: Program {
                 OnKeyPress(.right, { Message.nextMethod }),
                 OnKeyPress(.enter, { Message.submit }),
             ]
-        }
-        else {
+        } else {
             httpMethodInputs = [LabelView(text: AttrText(httpMethodText))]
         }
 
@@ -484,11 +478,10 @@ struct Suss: Program {
                     ]
                 ),
             ]
-        }
-        else {
+        } else {
             topLevelComponents = [
                 OnKeyPress(.esc, { Message.quit }),
-                OnKeyPress(.ctrl(.o), { Message.submit })
+                OnKeyPress(.ctrl(.o), { Message.submit }),
             ]
             if !model.requestSent {
                 topLevelComponents += [
@@ -499,10 +492,10 @@ struct Suss: Program {
         }
 
         var responseHeaders: [Component] = [
-            OnComponentResize(Message.responseHeadersSize),
+            OnComponentResize(Message.responseHeadersSize)
         ]
         var responseContent: [Component] = [
-            OnComponentResize(Message.responseBodySize),
+            OnComponentResize(Message.responseBodySize)
         ]
 
         if let response = model.response {
@@ -515,8 +508,7 @@ struct Suss: Program {
             headerString.append(Text("EOF\n", [.reverse]))
             responseHeaders.append(LabelView(text: headerString))
             responseContent.append(LabelView(text: response.body + Text("\nEOF", [.reverse])))
-        }
-        else if model.requestSent {
+        } else if model.requestSent {
             responseContent.append(SpinnerView(at: .middleCenter()))
         }
 
@@ -672,8 +664,7 @@ func split(_ string: String, separator: Character, limit: Int? = nil, trim: Bool
             let retval = String(chars).trimmingCharacters(in: .whitespacesAndNewlines)
             guard retval.count > 0 else { return nil }
             return retval
-        }
-        else {
+        } else {
             return String(chars)
         }
     })

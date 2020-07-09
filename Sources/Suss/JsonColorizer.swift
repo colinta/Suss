@@ -4,7 +4,6 @@
 
 import Ashen
 
-
 class JsonColorizer: Colorizer {
     enum Error: Swift.Error {
         case expectedString
@@ -86,8 +85,7 @@ class JsonColorizer: Colorizer {
                     if unicode.count == 4 {
                         tokens.append(.unicode(unicode))
                         state = .string
-                    }
-                    else {
+                    } else {
                         state = .unicode(unicode)
                     }
                 default:
@@ -122,16 +120,14 @@ class JsonColorizer: Colorizer {
                 if rem == "" {
                     tokens.append(.boolean(val))
                     state = .default
-                }
-                else if rem[rem.startIndex] == c {
+                } else if rem[rem.startIndex] == c {
                     let nextRemainder = String(rem.dropFirst())
                     state = .boolean(
                         val,
                         found + String(rem[rem.startIndex]),
                         String(nextRemainder)
                     )
-                }
-                else {
+                } else {
                     for err in found + rem {
                         tokens.append(.char(err.description))
                     }

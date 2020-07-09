@@ -2,8 +2,8 @@
 ///  main.swift
 //
 
-import Ashen
 import ArgumentParser
+import Ashen
 
 struct Main: ParsableCommand {
     enum Error: Swift.Error {
@@ -56,21 +56,18 @@ struct Main: ParsableCommand {
                 let urlParams = split(urlAndQuery[1], separator: "&")
                 if params.isEmpty {
                     params += urlParams
-                }
-                else {
+                } else {
                     params = urlParams
                 }
             }
-        }
-        else {
+        } else {
             url = ""
         }
 
         var urlParameters: String
         if params.isEmpty {
             urlParameters = ""
-        }
-        else {
+        } else {
             urlParameters = params.joined(separator: "\n") + "\n"
         }
 

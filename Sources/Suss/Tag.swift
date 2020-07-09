@@ -2,9 +2,8 @@
 ///  Tag.swift
 //
 
-import Foundation
 import Ashen
-
+import Foundation
 
 let Singletons = [
     "area",
@@ -19,7 +18,7 @@ let Singletons = [
     "link",
     "meta",
     "param",
-    "source"
+    "source",
 ]
 
 enum State: String {
@@ -305,8 +304,7 @@ class Tag: CustomStringConvertible {
 
             if isSingleton {
                 retval.append(Text(" />", [.foreground(.blue)]))
-            }
-            else {
+            } else {
                 retval.append(Text(">", [.foreground(.blue)]))
             }
         }
@@ -343,8 +341,7 @@ class Tag: CustomStringConvertible {
 
             if isSingleton {
                 retval += " />"
-            }
-            else {
+            } else {
                 retval += ">"
             }
         }
