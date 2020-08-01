@@ -4,13 +4,13 @@ import PackageDescription
 let package = Package(
     name: "Suss",
     platforms: [
-        .macOS(.v10_14),
+        .macOS(.v10_15),
     ],
     products: [
         .executable(name: "suss", targets: ["Suss"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/colinta/Ashen.git", .revision("efd81c6")),
+        .package(url: "https://github.com/colinta/Ashen.git", .branch("master")),
         .package(url: "https://github.com/apple/swift-argument-parser", .branch("master")),
         // .package(path: "../Ashen"),
     ],
