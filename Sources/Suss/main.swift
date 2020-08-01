@@ -13,17 +13,17 @@ struct Main: ParsableCommand {
     @Argument()
     var url: String?
 
-    @Option(name: [.customShort("X"), .customLong("request")], default: "GET")
-    var method: String
+    @Option(name: [.customShort("X"), .customLong("request")])
+    var method: String = "GET"
 
     @Option(name: [.customShort("p"), .customLong("param")])
-    var params: [String]
+    var params: [String] = []
 
     @Option(name: .shortAndLong)
-    var data: [String]
+    var data: [String] = []
 
     @Option(name: [.customShort("H"), .customLong("header")])
-    var headers: [String]
+    var headers: [String] = []
 
     func run() throws {
         let httpMethod: Http.Method
